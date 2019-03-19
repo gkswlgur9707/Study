@@ -1,0 +1,52 @@
+import socket
+import dpkt
+
+path = "C:/Test.pcap"
+
+with open(path,'rb') as p:
+    count = 0
+    while(1):
+        tuple= ()
+        list=[]
+        magic = p.read(4).encode('hex')
+        flag = (False, True)[magic == "d4c3b2a1"]
+        p.seek(36,1)
+        dmac = p.read(6).encode('hex')
+        smac = p.read(6).encode('hex')
+        type = p.read(2).encode('hex')
+        type = ("IPv6","IPv4")[type=="0800"]
+
+
+        if flag==True: 
+            print "[+] Start parsing : {}".format(path)
+
+            if type=="IPv4":
+                p.seek(2,1) ; total_len = p.read(2).encode('hex')
+                p.seek(4,1) ; ttl = p.read(1).encode('hex')
+                protocol = p.read(1).encode('hex')
+                protocol = ("","TCP")[protocol=="06"]
+                p.seek(2,1)
+
+                sip = p.read(4).encode('hex')
+                dip = p.read(4).encode('hex')
+                sport = p.read(2).encode('hex')
+                dport = p.read(2).encode('hex')
+
+
+                ip_divide = range(0, 8, 2) ; mac_divide = range(0,12,2)
+                sip = '.'.join([str(int(sip[a:a+2],16)) for a in ip_divide])
+                dip = '.'.join([str(int(dip[b:b+2],16)) for b in ip_divide])
+
+                tuple[0] = sip
+                tuple[1] = dip
+                tuple[2] = sport
+                tuple[3] = dport
+
+                list.append(tuple)
+                count += 1
+
+            elif type=="IPv6":
+            print("\t IPv6 Packet")
+
+        elif flag==False:
+            print "{} is not pcap file".format(path)
